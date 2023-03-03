@@ -18,3 +18,5 @@ infra/node_modules/
 functions/readpeopleinspace/target/
 
 functions/out/
+
+infra/cdk.out/
