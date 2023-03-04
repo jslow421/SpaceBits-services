@@ -5,7 +5,7 @@ export class SpaceRustStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const existingRole = cdk.aws_iam.Role.fromRoleArn(
+    const spacecloudLambdaRole = cdk.aws_iam.Role.fromRoleArn(
       this,
       "ExistingRole",
       "arn:aws:iam::939984321277:role/SpaceCloudStack-S3LambdaRoleB1E5D5C9-17FX54CGH1K7F"
@@ -24,7 +24,7 @@ export class SpaceRustStack extends cdk.Stack {
         code: cdk.aws_lambda.Code.fromAsset("../functions/out/"),
         handler: "read-people-in-space-rust",
         architecture: cdk.aws_lambda.Architecture.ARM_64,
-        role: existingRole,
+        role: spacecloudLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
       }
     );
