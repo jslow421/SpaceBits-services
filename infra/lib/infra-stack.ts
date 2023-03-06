@@ -21,8 +21,10 @@ export class SpaceRustStack extends cdk.Stack {
         runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2,
         memorySize: 128,
         timeout: cdk.Duration.seconds(30),
-        code: cdk.aws_lambda.Code.fromAsset("../functions/out/"),
-        handler: "read-people-in-space-rust",
+        code: cdk.aws_lambda.Code.fromAsset(
+          "../functions/out/readpeopleinspace"
+        ),
+        handler: "nil",
         architecture: cdk.aws_lambda.Architecture.ARM_64,
         role: spacecloudLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
