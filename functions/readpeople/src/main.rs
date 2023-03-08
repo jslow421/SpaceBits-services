@@ -52,7 +52,8 @@ async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
             "Content-Type,Authorization,",
         )
         .header("Access-Control-Allow-Methods", "GET")
-        .body(serde_json::to_string(&temp).unwrap().into())
+        // TODO look into the unwrap bit
+        .body(serde_json::to_string(&temp).unwrap_or_default().into())
         .map_err(Box::new)?;
 
     return Ok(resp);
