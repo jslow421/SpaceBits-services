@@ -5,7 +5,6 @@ use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 use simple_logger::SimpleLogger;
-use structopt::StructOpt;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -14,41 +13,19 @@ struct Person {
     craft: Craft,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 struct PeopleInSpaceResponse {
-    #[serde(alias = "updateDate")]
+    #[serde(alias = "updatedTime")]
     update_date: String,
     people: Vec<Person>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 enum Craft {
+    #[serde(alias = "ISS")]
     ISS,
-    Hubble,
-    Other(String),
-}
-
-#[derive(Debug, StructOpt)]
-struct Opt {
-    /// The AWS Region.
-    #[structopt(short, long)]
-    region: Option<String>,
-
-    /// The name of the bucket.
-    #[structopt(short, long)]
-    bucket: String,
-
-    /// The object key.
-    #[structopt(short, long)]
-    object: String,
-
-    /// How long in seconds before the presigned request should expire.
-    #[structopt(short, long)]
-    expires_in: Option<u64>,
-
-    /// Whether to display additional information.
-    #[structopt(short, long)]
-    verbose: bool,
+    #[serde(alias = "Shenzhou 15")]
+    Shenzhou15,
 }
 
 /// This is the main body for the function.
@@ -56,24 +33,8 @@ struct Opt {
 /// There are some code example in the following URLs:
 /// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
 async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
-    SimpleLogger::new()
-        .with_level(LevelFilter::Info)
-        .init()
-        .unwrap();
-
-    // Extract some useful information from the request
-
-    let thing = PeopleInSpaceResponse {
-        update_date: String::from("2021-01-01"),
-        people: vec![Person {
-            name: String::from("John"),
-            craft: Craft::ISS,
-        }],
-    };
-
     let config = aws_config::load_from_env().await;
     let client = s3::Client::new(&config);
-
     let data = client
         .get_object()
         .bucket("spaceclouddatabucket")
@@ -81,22 +42,38 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         .send()
         .await?;
 
-    log::info!("{}", data.content_length());
+    ////log::info!("{}", data.content_length());
 
-    log::info!("{}", thing.people[0].name);
+    let bytes = data.body.collect().await?.into_bytes();
+    let response = std::str::from_utf8(&bytes)?;
+    let temp: PeopleInSpaceResponse = serde_json::from_str(response).unwrap();
+
+    log::info!("Updated date for found values: {}", temp.update_date);
 
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
     let resp = Response::builder()
         .status(200)
-        .header("content-type", "text/html")
-        .body("Hello AWS Lambda HTTP request".into())
+        .header("content-type", "application/json")
+        .header("Access-Control-Allow-Origin", "*")
+        .header(
+            "Access-Control-Allow-Headers",
+            "Content-Type,Authorization,",
+        )
+        .header("Access-Control-Allow-Methods", "GET")
+        .body(serde_json::to_string(&temp).unwrap().into())
         .map_err(Box::new)?;
-    Ok(resp)
+
+    return Ok(resp);
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    SimpleLogger::new()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
+
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         // disable printing the name of the module in every log line.
