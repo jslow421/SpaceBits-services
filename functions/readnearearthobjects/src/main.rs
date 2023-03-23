@@ -1,3 +1,5 @@
+use aws_config;
+use aws_sdk_s3 as s3;
 use std::collections::HashMap;
 
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
@@ -114,20 +116,37 @@ async fn retrieveData() -> Result<ApiResponse, Error> {
     Ok(data)
 }
 
-async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
+async fn writeToS3(data: ApiResponse) {
+    // Write data to s3 as json file
+    let config = aws_config::load_from_env().await;
+    let client = s3::Client::new(&config);
+
+    let json = serde_json::to_string(&data).unwrap();
+
+    let data = client
+        .put_object()
+        .bucket("spaceclouddatabucket")
+        .key("near_earth_objects.json")
+        .body(json)
+        .send()
+        .await;
+}
+
+async fn function_handler(_event: Request) {
     let data = retrieveData().await?;
     let serialized_data = serde_json::to_string(&data).unwrap();
 
     // TODO might be nice to have a factory for this?
-    let resp = Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .header("Access-Control-Allow-Origin", "*")
-        .header("Access-Control-Allow-Methods", "GET")
-        .header("Access-Control-Allow-Headers", "Content-Type")
-        .body(serialized_data.into())
-        .map_err(Box::new)?;
-    Ok(resp)
+    // let resp = Response::builder()
+    //     .status(200)
+    //     .header("content-type", "application/json")
+    //     .header("Access-Control-Allow-Origin", "*")
+    //     .header("Access-Control-Allow-Methods", "GET")
+    //     .header("Access-Control-Allow-Headers", "Content-Type")
+    //     .body(serialized_data.into())
+    //     .map_err(Box::new);
+
+    writeToS3(data).await;
 }
 
 #[tokio::main]
