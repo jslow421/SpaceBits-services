@@ -15,6 +15,7 @@ edition = "2021"
 # and it will keep the alphabetic ordering for you.
 
 [dependencies]
+reqwest = { version = "0.11", features = ["native-tls-vendored"] }
 lambda_http = "0.7"
 lambda_runtime = "0.7"
 tokio = { version = "1", features = ["macros"] }
@@ -24,7 +25,11 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
 ] }
 log = "0.4"
 simple_logger = "4.0.0"
-reqwest = "0.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 aws-config = "0.54.1"
+aws-sdk-s3 = "0.24.0"
+aws-sdk-ssm = "0.24.0"
+aws-smithy-http = "0.55.0"
+bytes = "1.0"
+chrono = "0.4.24"

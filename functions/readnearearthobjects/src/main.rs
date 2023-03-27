@@ -1,8 +1,11 @@
 use aws_config;
 use aws_sdk_s3 as s3;
+use aws_sdk_ssm::{Client as ssm_client, Error as ssm_error, Region, PKG_VERSION};
+use chrono::{DateTime, Utc};
+use s3::types::ByteStream;
 use std::collections::HashMap;
 
-use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
+use lambda_http::{run, service_fn, Body, Error, Request, Response};
 use log::LevelFilter;
 use reqwest;
 use serde::{Deserialize, Serialize};
@@ -43,18 +46,6 @@ struct ApiResponseLink {
     this: Option<String>,
 }
 
-// #[derive(Debug, Serialize, Deserialize)]
-// struct NearEarthObject {
-//     id: String,
-//     name: String,
-//     nasa_jpl_url: String,
-//     is_potentially_hazardous_asteroid: bool,
-//     absolute_magnitude_h: f64,
-//     estimated_diameter: EstimatedDiameter,
-//     close_approach_data: Vec<CloseApproachData>,
-//     is_sentry_object: bool,
-// }
-
 #[derive(Debug, Serialize, Deserialize)]
 struct EstimatedDiameter {
     kilometers: EstimatedDiameterValues,
@@ -93,60 +84,80 @@ struct MissDistance {
     miles: String,
 }
 
-async fn retrieveData() -> Result<ApiResponse, Error> {
+async fn retrieve_data() -> Result<ApiResponse, Error> {
     let client = reqwest::Client::new();
-    // let res: reqwest::Response = client
-    //     .get("https://api.nasa.gov/neo/rest/v1/feed?")
-    //     .send()
-    //     .await
-    //     .map_err(Box::new)?;
-
-    let json_response = client
-        .get("https://api.nasa.gov/neo/rest/v1/feed?start_date=2023-03-20&end_date=2023-03-20&api_key=OJjWbhF284SdhFoDq40D1WDNCtSfecyf6NjZqVyJ")
+    let secrets_client = ssm_client::new(&aws_config::load_from_env().await);
+    let key_val = secrets_client
+        .get_parameter()
+        .name("/space_cloud/keys/nasa_api_key")
+        .with_decryption(true)
         .send()
         .await?
-        .text()
+        .parameter
+        .unwrap()
+        .value
+        .unwrap();
+
+    let today = Utc::now().format("%Y-%m-%d");
+    let start_date = String::from(today.to_string());
+    let end_date = String::from(today.to_string());
+
+    let response = client
+        .get(format!(
+            "https://api.nasa.gov/neo/rest/v1/feed?start_date={}&end_date={}&api_key={}",
+            start_date, end_date, key_val
+        ))
+        .send()
         .await?;
+
+    if response.status() != 200 {
+        return Err(Error::from(format!(
+            "Error retrieving data from NASA API: {}",
+            response.status()
+        )));
+    }
+
+    let json_response = response.text().await?;
 
     println!("{:?}", json_response);
 
     let data = serde_json::from_str(&json_response)?;
-    println!("{:?}", data);
 
-    Ok(data)
+    return Ok(data);
 }
 
-async fn writeToS3(data: ApiResponse) {
-    // Write data to s3 as json file
+async fn write_to_s3(data: ApiResponse) {
     let config = aws_config::load_from_env().await;
     let client = s3::Client::new(&config);
 
     let json = serde_json::to_string(&data).unwrap();
+    let stream = ByteStream::from(json.as_bytes().to_vec());
 
-    let data = client
+    let _data = client
         .put_object()
         .bucket("spaceclouddatabucket")
         .key("near_earth_objects.json")
-        .body(json)
+        .body(stream)
         .send()
         .await;
 }
 
-async fn function_handler(_event: Request) {
-    let data = retrieveData().await?;
-    let serialized_data = serde_json::to_string(&data).unwrap();
+async fn function_handler(_event: Request) -> Result<Response<String>, Error> {
+    let data = retrieve_data().await?;
+    //let serialized_data = serde_json::to_string(&data).unwrap();
 
-    // TODO might be nice to have a factory for this?
-    // let resp = Response::builder()
-    //     .status(200)
-    //     .header("content-type", "application/json")
-    //     .header("Access-Control-Allow-Origin", "*")
-    //     .header("Access-Control-Allow-Methods", "GET")
-    //     .header("Access-Control-Allow-Headers", "Content-Type")
-    //     .body(serialized_data.into())
-    //     .map_err(Box::new);
+    let resp = Response::builder()
+        .status(200)
+        .header("content-type", "application/json")
+        .header("Access-Control-Allow-Origin", "*")
+        .header("Access-Control-Allow-Methods", "GET")
+        .header("Access-Control-Allow-Headers", "Content-Type")
+        .body(String::from("Completed"))
+        .map_err(Box::new)?;
 
-    writeToS3(data).await;
+    write_to_s3(data).await;
+
+    Ok(resp)
 }
 
 #[tokio::main]
@@ -165,15 +176,21 @@ async fn main() -> Result<(), Error> {
     run(service_fn(function_handler)).await
 }
 
-// Test for retrieveData function
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_retrieve_data() {
-        let data = retrieveData().await.unwrap();
+    async fn test_retrieve_dat_element_count_greater_than_zero() {
+        let data = retrieve_data().await.unwrap();
         println!("{:?}", data);
         assert!(data.element_count > 0);
+    }
+
+    #[tokio::test]
+    async fn test_retrieve_data_objects_greater_equal_one() {
+        let data = retrieve_data().await.unwrap();
+        println!("{:?}", data);
+        assert!(data.near_earth_objects.len() >= 1);
     }
 }
