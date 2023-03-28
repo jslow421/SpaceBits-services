@@ -20,3 +20,7 @@ functions/readpeopleinspace/target/
 functions/out/
 
 infra/cdk.out/
+
+shared/target/
+
+functions/readpeople/.idea/
