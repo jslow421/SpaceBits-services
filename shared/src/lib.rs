@@ -73,3 +73,9 @@ pub struct MissDistance {
     kilometers: String,
     miles: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StoredNearEarthObjectModel {
+    pub updated_date_time: String,
+    pub data: ApiResponse,
+}

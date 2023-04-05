@@ -1,10 +1,8 @@
-use aws_config;
 use aws_sdk_s3 as s3;
 use aws_sdk_ssm::Client as ssm_client;
 use chrono::Utc;
 use lambda_http::{run, service_fn, Error, Request, Response};
 use log::LevelFilter;
-use reqwest;
 use s3::types::ByteStream;
 use shared::ApiResponse;
 use simple_logger::SimpleLogger;
@@ -24,8 +22,8 @@ async fn retrieve_data() -> Result<ApiResponse, Error> {
         .unwrap();
 
     let today = Utc::now().format("%Y-%m-%d");
-    let start_date = String::from(today.to_string());
-    let end_date = String::from(today.to_string());
+    let start_date = today.to_string();
+    let end_date = today.to_string();
 
     let response = client
         .get(format!(
@@ -48,7 +46,7 @@ async fn retrieve_data() -> Result<ApiResponse, Error> {
 
     let data = serde_json::from_str(&json_response)?;
 
-    return Ok(data);
+    Ok(data)
 }
 
 async fn write_to_s3(data: ApiResponse) {
@@ -69,16 +67,18 @@ async fn write_to_s3(data: ApiResponse) {
 
 async fn function_handler(_event: Request) -> Result<Response<String>, Error> {
     let data = retrieve_data().await?;
-    //let serialized_data = serde_json::to_string(&data).unwrap();
+    // let serialized_data = serde_json::to_string(&data).unwrap();
 
-    let resp = Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .header("Access-Control-Allow-Origin", "*")
-        .header("Access-Control-Allow-Methods", "GET")
-        .header("Access-Control-Allow-Headers", "Content-Type")
-        .body(String::from("Completed"))
-        .map_err(Box::new)?;
+    // let resp = Response::builder()
+    //     .status(200)
+    //     .header("content-type", "application/json")
+    //     .header("Access-Control-Allow-Origin", "*")
+    //     .header("Access-Control-Allow-Methods", "GET")
+    //     .header("Access-Control-Allow-Headers", "Content-Type")
+    //     .body(String::from("Completed"))
+    //     .map_err(Box::new)?;
+
+    let resp = Response::new("".to_string());
 
     write_to_s3(data).await;
 
@@ -116,6 +116,6 @@ mod tests {
     async fn test_retrieve_data_objects_greater_equal_one() {
         let data = retrieve_data().await.unwrap();
         println!("{:?}", data);
-        assert!(data.near_earth_objects.len() >= 1);
+        assert!(!data.near_earth_objects.is_empty());
     }
 }
