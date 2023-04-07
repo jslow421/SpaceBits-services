@@ -1,4 +1,3 @@
-use aws_config;
 use aws_sdk_s3 as s3;
 use lambda_http::{run, service_fn, Body, Error, Request, Response};
 use log::LevelFilter;

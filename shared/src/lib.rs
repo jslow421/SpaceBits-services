@@ -79,3 +79,16 @@ pub struct StoredNearEarthObjectModel {
     pub updated_date_time: String,
     pub data: ApiResponse,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PersonModel {
+    pub name: String,
+    pub craft: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PeopleInSpaceModel {
+    #[serde(alias = "updatedTime")]
+    pub updated_time: String,
+    pub people: Vec<PersonModel>,
+}

@@ -24,3 +24,5 @@ infra/cdk.out/
 shared/target/
 
 functions/readpeople/.idea/
+
+functions/readupcominglaunches/target/
