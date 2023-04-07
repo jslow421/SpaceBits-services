@@ -3,7 +3,7 @@ use aws_sdk_ssm::Client as ssm_client;
 use chrono::Utc;
 use lambda_http::{run, service_fn, Error, Request, Response};
 use log::LevelFilter;
-use s3::types::ByteStream;
+use s3::primitives::ByteStream;
 use shared::ApiResponse;
 use simple_logger::SimpleLogger;
 
