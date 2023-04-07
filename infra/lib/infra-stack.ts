@@ -5,26 +5,35 @@ export class SpaceRustStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const spacecloudLambdaRole = cdk.aws_iam.Role.fromRoleArn(
+    const spaceBitsLambdaRole = new cdk.aws_iam.Role(
       this,
-      "ExistingRole",
-      "arn:aws:iam::939984321277:role/SpaceCloudStack-S3LambdaRoleB1E5D5C9-17FX54CGH1K7F"
-    );
-
-    spacecloudLambdaRole.attachInlinePolicy(
-      new cdk.aws_iam.Policy(this, "SpaceCloudS3Policy", {
-        statements: [
-          new cdk.aws_iam.PolicyStatement({
-            effect: cdk.aws_iam.Effect.ALLOW,
-            actions: ["ssm:GetParameter", "ssm:Decrypt"],
-            resources: ["*"],
-          }),
+      "SpaceBitsLambdaRole",
+      {
+        assumedBy: new cdk.aws_iam.ServicePrincipal("lambda.amazonaws.com"),
+        managedPolicies: [
+          cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+            "AmazonDynamoDBFullAccess"
+          ),
+          cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+            "CloudWatchFullAccess"
+          ),
         ],
-      })
+        inlinePolicies: {
+          SpaceBitsLambdaPolicy: new cdk.aws_iam.PolicyDocument({
+            statements: [
+              new cdk.aws_iam.PolicyStatement({
+                effect: cdk.aws_iam.Effect.ALLOW,
+                actions: ["ssm:GetParameter", "ssm:Decrypt"],
+                resources: ["*"],
+              }),
+            ],
+          }),
+        },
+      }
     );
 
     // Functions
-    // Read function in Rust
+    // Read function
     const readFunction = new cdk.aws_lambda.Function(
       this,
       "ReadPeopleInSpaceRustFunction",
@@ -36,7 +45,7 @@ export class SpaceRustStack extends cdk.Stack {
         code: cdk.aws_lambda.Code.fromAsset("../functions/out/readpeople"),
         handler: "nil",
         architecture: cdk.aws_lambda.Architecture.ARM_64,
-        role: spacecloudLambdaRole,
+        role: spaceBitsLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
       }
     );
@@ -55,7 +64,7 @@ export class SpaceRustStack extends cdk.Stack {
         ),
         handler: "nil",
         architecture: cdk.aws_lambda.Architecture.ARM_64,
-        role: spacecloudLambdaRole,
+        role: spaceBitsLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
         environment: {
           BUCKET_NAME: "spaceclouddatabucket",
@@ -77,7 +86,29 @@ export class SpaceRustStack extends cdk.Stack {
         ),
         handler: "nil",
         architecture: cdk.aws_lambda.Architecture.ARM_64,
-        role: spacecloudLambdaRole,
+        role: spaceBitsLambdaRole,
+        logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
+        environment: {
+          BUCKET_NAME: "spaceclouddatabucket",
+        },
+      }
+    );
+
+    // Get and store people in space data
+    const getAndStorePeopleInSpaceFunction = new cdk.aws_lambda.Function(
+      this,
+      "GetAndStorePeopleInSpaceFunction",
+      {
+        functionName: "get-and-store-people-in-space",
+        runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2,
+        memorySize: 128,
+        timeout: cdk.Duration.seconds(30),
+        code: cdk.aws_lambda.Code.fromAsset(
+          "../functions/out/getpeopleinspacedata"
+        ),
+        handler: "nil",
+        architecture: cdk.aws_lambda.Architecture.ARM_64,
+        role: spaceBitsLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
         environment: {
           BUCKET_NAME: "spaceclouddatabucket",
@@ -103,21 +134,6 @@ export class SpaceRustStack extends cdk.Stack {
     bucket.grantRead(readFunction);
     bucket.grantRead(retrieveNearEarthObjectsFunction);
     bucket.grantReadWrite(nearEarthObjectsRetrievalFunction);
-
-    // Event to run daily
-    const dailyEventRule = new cdk.aws_events.Rule(this, "dailyEventRule", {
-      schedule: cdk.aws_events.Schedule.cron({
-        minute: "0",
-        hour: "5",
-      }),
-      enabled: true,
-    });
-
-    dailyEventRule.addTarget(
-      new cdk.aws_events_targets.LambdaFunction(
-        nearEarthObjectsRetrievalFunction
-      )
-    );
 
     // Api Gateway
     const spaceBitsApi = new cdk.aws_apigateway.RestApi(this, "SpaceBitsApi", {
@@ -197,6 +213,50 @@ export class SpaceRustStack extends cdk.Stack {
           },
         ],
       }
+    );
+
+    // Event rules
+    const everyTwoHoursEventRule = new cdk.aws_events.Rule(
+      this,
+      "everyTwoHoursEventRule",
+      {
+        schedule: cdk.aws_events.Schedule.rate(cdk.Duration.hours(2)),
+        enabled: true,
+        ruleName: "everyTwoHoursEventRule",
+      }
+    );
+
+    const twiceDailyEventRule = new cdk.aws_events.Rule(
+      this,
+      "twiceDailyEventRule",
+      {
+        schedule: cdk.aws_events.Schedule.cron({
+          hour: "0/12",
+          minute: "0",
+        }),
+      }
+    );
+
+    // Event to run daily
+    const dailyEventRule = new cdk.aws_events.Rule(this, "dailyEventRule", {
+      schedule: cdk.aws_events.Schedule.cron({
+        minute: "0",
+        hour: "5",
+      }),
+      enabled: true,
+    });
+
+    // Add targets to event rules
+    everyTwoHoursEventRule.addTarget(
+      new cdk.aws_events_targets.LambdaFunction(
+        getAndStorePeopleInSpaceFunction
+      )
+    );
+
+    dailyEventRule.addTarget(
+      new cdk.aws_events_targets.LambdaFunction(
+        nearEarthObjectsRetrievalFunction
+      )
     );
 
     // Key for API usage plan
