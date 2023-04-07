@@ -6,13 +6,15 @@ use log::LevelFilter;
 use s3::primitives::ByteStream;
 use shared::ApiResponse;
 use simple_logger::SimpleLogger;
+use std::env;
 
 async fn retrieve_data() -> Result<ApiResponse, Error> {
     let client = reqwest::Client::new();
     let secrets_client = ssm_client::new(&aws_config::load_from_env().await);
+    let key_location = env::var("KEY_LOCATION").unwrap();
     let key_val = secrets_client
         .get_parameter()
-        .name("/space_cloud/keys/nasa_api_key")
+        .name(key_location)
         .with_decryption(true)
         .send()
         .await?
@@ -56,10 +58,13 @@ async fn write_to_s3(data: ApiResponse) {
     let json = serde_json::to_string(&data).unwrap();
     let stream = ByteStream::from(json.as_bytes().to_vec());
 
+    let bucket_name = env::var("BUCKET_NAME").unwrap();
+    let file_name = env::var("FILE_NAME").unwrap();
+
     let _data = client
         .put_object()
-        .bucket("spaceclouddatabucket")
-        .key("near_earth_objects.json")
+        .bucket(bucket_name)
+        .key(file_name)
         .body(stream)
         .send()
         .await;
@@ -67,17 +72,6 @@ async fn write_to_s3(data: ApiResponse) {
 
 async fn function_handler(_event: Request) -> Result<Response<String>, Error> {
     let data = retrieve_data().await?;
-    // let serialized_data = serde_json::to_string(&data).unwrap();
-
-    // let resp = Response::builder()
-    //     .status(200)
-    //     .header("content-type", "application/json")
-    //     .header("Access-Control-Allow-Origin", "*")
-    //     .header("Access-Control-Allow-Methods", "GET")
-    //     .header("Access-Control-Allow-Headers", "Content-Type")
-    //     .body(String::from("Completed"))
-    //     .map_err(Box::new)?;
-
     let resp = Response::new("".to_string());
 
     write_to_s3(data).await;

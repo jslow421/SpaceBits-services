@@ -55,7 +55,7 @@ export class SpaceRustStack extends cdk.Stack {
       this,
       "NearEarthObjectsRustFunction",
       {
-        functionName: "retrieve-near-earth-objects-rust",
+        functionName: `${this.stackName}-retrieve-near-earth-objects-rust`,
         runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2,
         memorySize: 128,
         timeout: cdk.Duration.seconds(30),
@@ -68,6 +68,8 @@ export class SpaceRustStack extends cdk.Stack {
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
         environment: {
           BUCKET_NAME: "spaceclouddatabucket",
+          FILE_NAME: "near_earth_objects.json",
+          KEY_LOCATION: "/space_cloud/keys/nasa_api_key",
         },
       }
     );
@@ -77,7 +79,7 @@ export class SpaceRustStack extends cdk.Stack {
       this,
       "RetrieveNearEarthObjectsFunction",
       {
-        functionName: "retrieve-near-earth-objects",
+        functionName: `${this.stackName}-RetrieveStoredNEOJsonForApi`,
         runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2,
         memorySize: 128,
         timeout: cdk.Duration.seconds(30),
