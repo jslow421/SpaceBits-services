@@ -5,6 +5,8 @@ export class SpaceRustStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const BUCKET_NAME = "spaceclouddatabucket";
+
     const spaceBitsLambdaRole = new cdk.aws_iam.Role(
       this,
       "SpaceBitsLambdaRole",
@@ -67,7 +69,7 @@ export class SpaceRustStack extends cdk.Stack {
         role: spaceBitsLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
         environment: {
-          BUCKET_NAME: "spaceclouddatabucket",
+          BUCKET_NAME: BUCKET_NAME,
           FILE_NAME: "near_earth_objects.json",
           KEY_LOCATION: "/space_cloud/keys/nasa_api_key",
         },
@@ -91,7 +93,7 @@ export class SpaceRustStack extends cdk.Stack {
         role: spaceBitsLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
         environment: {
-          BUCKET_NAME: "spaceclouddatabucket",
+          BUCKET_NAME: BUCKET_NAME,
         },
       }
     );
@@ -113,7 +115,8 @@ export class SpaceRustStack extends cdk.Stack {
         role: spaceBitsLambdaRole,
         logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
         environment: {
-          BUCKET_NAME: "spaceclouddatabucket",
+          BUCKET_NAME: BUCKET_NAME,
+          FILE_NAME: "people_in_space.json",
         },
       }
     );
@@ -175,7 +178,7 @@ export class SpaceRustStack extends cdk.Stack {
       "GET",
       new cdk.aws_apigateway.LambdaIntegration(readFunction),
       {
-        apiKeyRequired: true,
+        apiKeyRequired: false,
       }
     );
 
@@ -228,6 +231,7 @@ export class SpaceRustStack extends cdk.Stack {
       }
     );
 
+    // Event to run twice daily
     const twiceDailyEventRule = new cdk.aws_events.Rule(
       this,
       "twiceDailyEventRule",
