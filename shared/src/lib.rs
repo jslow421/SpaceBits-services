@@ -74,12 +74,24 @@ pub struct MissDistance {
     miles: String,
 }
 
+/// Models for storing NEO data in the database
+/// Used because the API response is not directly compatible with the database
+/// (the API response is a HashMap, and the database is a Vec)
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NearEarthObjectModel {
+    pub links: ApiResponseLink,
+    pub element_count: i32,
+    pub near_earth_objects: Vec<NearEarthObject>,
+}
+
+/// Database model for NEO data
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StoredNearEarthObjectModel {
     pub updated_date_time: String,
     pub data: ApiResponse,
 }
 
+/// Individual person in space model
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PersonModel {
     pub name: String,
@@ -89,6 +101,6 @@ pub struct PersonModel {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PeopleInSpaceModel {
     #[serde(alias = "updatedTime")]
-    pub updated_time: String,
+    pub update_time: String,
     pub people: Vec<PersonModel>,
 }
