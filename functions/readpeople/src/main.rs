@@ -13,8 +13,7 @@ struct Person {
 
 #[derive(Deserialize, Serialize, Debug)]
 struct PeopleInSpaceResponse {
-    #[serde(alias = "updatedTime")]
-    update_date: String,
+    update_time: String,
     people: Vec<Person>,
 }
 
@@ -40,7 +39,7 @@ async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
     let response = std::str::from_utf8(&bytes)?;
     let temp: PeopleInSpaceResponse = serde_json::from_str(response).unwrap();
 
-    log::info!("Updated date for found values: {}", temp.update_date);
+    log::info!("Updated date for found values: {}", temp.update_time);
 
     let resp = Response::builder()
         .status(200)

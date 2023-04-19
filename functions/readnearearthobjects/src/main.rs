@@ -44,13 +44,12 @@ async fn retrieve_data() -> Result<ApiResponse, Error> {
 
     let json_response = response.text().await?;
 
-    println!("{:?}", json_response);
-
     let data = serde_json::from_str(&json_response)?;
 
     Ok(data)
 }
 
+/// Persist the data to S3
 async fn write_to_s3(data: ApiResponse) {
     let config = aws_config::load_from_env().await;
     let client = s3::Client::new(&config);
