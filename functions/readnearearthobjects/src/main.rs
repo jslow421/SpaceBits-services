@@ -4,7 +4,7 @@ use chrono::Utc;
 use lambda_http::{run, service_fn, Error, Request, Response};
 use log::LevelFilter;
 use s3::primitives::ByteStream;
-use shared::ApiResponse;
+use shared::apimodels::ApiResponse;
 use simple_logger::SimpleLogger;
 use std::env;
 
