@@ -4,7 +4,7 @@ use lambda_http::{run, service_fn, Error, Request, Response};
 use log::LevelFilter;
 use s3::primitives::ByteStream;
 use serde::{Deserialize, Serialize};
-use shared::{PeopleInSpaceModel, PersonModel};
+use shared::apimodels::{PeopleInSpaceModel, PersonModel};
 use simple_logger::SimpleLogger;
 use std::env;
 

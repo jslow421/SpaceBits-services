@@ -33,4 +33,4 @@ aws-sdk-ssm = "0.25"
 aws-smithy-http = "0.55.0"
 bytes = "1.0"
 chrono = "0.4.24"
-shared = { path = "../../shared/" }
+shared = { path = "../../shared/", features = ["default"] }

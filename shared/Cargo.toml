@@ -13,6 +13,8 @@ serde = { version = "1.0", features = ["derive"] }
 [features]
 default = [
     "apimodels",
+    "persistencemodels"
     ]
 
 apimodels = []
+persistencemodels = []

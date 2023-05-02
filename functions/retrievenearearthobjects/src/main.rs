@@ -1,5 +1,6 @@
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
-use shared::{ApiResponse, StoredNearEarthObjectModel};
+use shared::apimodels::ApiResponse;
+use shared::persistencemodels::NearEarthObject;
 
 async fn get_json_data_from_s3() -> Result<ApiResponse, Error> {
     let config = aws_config::load_from_env().await;
@@ -18,11 +19,11 @@ async fn get_json_data_from_s3() -> Result<ApiResponse, Error> {
     Ok(temp)
 }
 
-fn generate_response(data: ApiResponse) -> StoredNearEarthObjectModel {
-    StoredNearEarthObjectModel {
-        updated_date_time: "COMING_SOON".to_string(),
-        data,
-    }
+fn generate_response(data: ApiResponse) -> () {
+    // NearEarthObject {
+    //     updated_date_time: "COMING_SOON".to_string(),
+    //     data,
+    // }
 }
 
 async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {

@@ -1,24 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Models for storing NEO data in the database
+/// Used because the API response is not directly compatible with the database
+/// (the API response is a HashMap, and the database is a Vec)
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PersonModel {
-    pub name: String,
-    pub craft: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PeopleInSpaceModel {
-    #[serde(alias = "updatedTime")]
-    pub update_time: String,
-    pub people: Vec<PersonModel>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse {
-    pub links: ApiResponseLink,
+pub struct NearEarthObjectModel {
+    pub links: ApiLinks,
     pub element_count: i32,
-    pub near_earth_objects: HashMap<String, Vec<NearEarthObject>>,
+    pub near_earth_objects: Vec<NearEarthObject>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -32,17 +22,11 @@ pub struct NearEarthObject {
     pub is_potentially_hazardous_asteroid: bool,
     pub close_approach_data: Vec<CloseApproachData>,
     pub is_sentry_object: bool,
-    pub links: ApiResponseLink,
+    pub links: ApiLinks,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct NearEarthLink {
-    #[serde(alias = "self")]
-    pub this: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponseLink {
+pub struct ApiLinks {
     pub next: Option<String>,
     pub prev: Option<String>,
     #[serde(alias = "self")]

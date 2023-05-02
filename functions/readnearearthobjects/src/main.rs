@@ -5,6 +5,7 @@ use lambda_http::{run, service_fn, Error, Request, Response};
 use log::LevelFilter;
 use s3::primitives::ByteStream;
 use shared::apimodels::ApiResponse;
+use shared::persistencemodels::*;
 use simple_logger::SimpleLogger;
 use std::env;
 
@@ -49,8 +50,96 @@ async fn retrieve_data() -> Result<ApiResponse, Error> {
     Ok(data)
 }
 
+async fn convert_to_storage(response: ApiResponse) -> Result<NearEarthObjectModel, Error> {
+    let mut near_earth_objects: NearEarthObjectModel = NearEarthObjectModel {
+        links: ApiLinks {
+            next: response.links.next,
+            prev: response.links.prev,
+            this: response.links.this,
+        },
+        element_count: response.element_count,
+        near_earth_objects: Vec::new(),
+    };
+
+    let first_item = response.near_earth_objects.values().next().unwrap();
+
+    // TODO: Since we're going through this effort, maybe we can clean up the types so we're not cloning all these strings
+    for item in first_item {
+        let mut neo = NearEarthObject {
+            id: item.id.clone(),
+            neo_reference_id: item.neo_reference_id.clone(),
+            name: item.name.clone(),
+            nasa_jpl_url: item.nasa_jpl_url.clone(),
+            absolute_magnitude_h: item.absolute_magnitude_h,
+            estimated_diameter: EstimatedDiameter {
+                kilometers: EstimatedDiameterValues {
+                    estimated_diameter_min: item
+                        .estimated_diameter
+                        .kilometers
+                        .estimated_diameter_min,
+                    estimated_diameter_max: item
+                        .estimated_diameter
+                        .kilometers
+                        .estimated_diameter_max,
+                },
+                meters: EstimatedDiameterValues {
+                    estimated_diameter_min: item.estimated_diameter.meters.estimated_diameter_min,
+                    estimated_diameter_max: item.estimated_diameter.meters.estimated_diameter_max,
+                },
+                miles: EstimatedDiameterValues {
+                    estimated_diameter_min: item.estimated_diameter.miles.estimated_diameter_min,
+                    estimated_diameter_max: item.estimated_diameter.miles.estimated_diameter_max,
+                },
+                feet: EstimatedDiameterValues {
+                    estimated_diameter_min: item.estimated_diameter.feet.estimated_diameter_min,
+                    estimated_diameter_max: item.estimated_diameter.feet.estimated_diameter_max,
+                },
+            },
+            is_potentially_hazardous_asteroid: item.is_potentially_hazardous_asteroid,
+            close_approach_data: Vec::new(),
+            is_sentry_object: item.is_sentry_object,
+            links: ApiLinks {
+                next: item.links.next.clone(),
+                prev: item.links.prev.clone(),
+                this: item.links.this.clone(),
+            },
+        };
+
+        for close_approach in &item.close_approach_data {
+            let close_approach_data = CloseApproachData {
+                close_approach_date: close_approach.close_approach_date.clone(),
+                orbiting_body: close_approach.orbiting_body.clone(),
+                epoch_date_close_approach: close_approach.epoch_date_close_approach,
+                relative_velocity: RelativeVelocity {
+                    kilometers_per_second: close_approach
+                        .relative_velocity
+                        .kilometers_per_second
+                        .clone(),
+                    kilometers_per_hour: close_approach
+                        .relative_velocity
+                        .kilometers_per_hour
+                        .clone(),
+                    miles_per_hour: close_approach.relative_velocity.miles_per_hour.clone(),
+                },
+                miss_distance: MissDistance {
+                    astronomical: close_approach.miss_distance.astronomical.clone(),
+                    lunar: close_approach.miss_distance.lunar.clone(),
+                    kilometers: close_approach.miss_distance.kilometers.clone(),
+                    miles: close_approach.miss_distance.miles.clone(),
+                },
+            };
+
+            neo.close_approach_data.push(close_approach_data);
+        }
+
+        near_earth_objects.near_earth_objects.push(neo);
+    }
+
+    Ok(near_earth_objects)
+}
+
 /// Persist the data to S3
-async fn write_to_s3(data: ApiResponse) {
+async fn write_to_s3(data: NearEarthObjectModel) {
     let config = aws_config::load_from_env().await;
     let client = s3::Client::new(&config);
 
@@ -72,8 +161,8 @@ async fn write_to_s3(data: ApiResponse) {
 async fn function_handler(_event: Request) -> Result<Response<String>, Error> {
     let data = retrieve_data().await?;
     let resp = Response::new("".to_string());
-
-    write_to_s3(data).await;
+    let converted_data = convert_to_storage(data).await?;
+    write_to_s3(converted_data).await;
 
     Ok(resp)
 }
