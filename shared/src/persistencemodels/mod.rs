@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NearEarthObjectApiResponse {
+    pub data: NearEarthObjectModel,
+    pub updated_date_time: String,
+}
+
 /// Models for storing NEO data in the database
 /// Used because the API response is not directly compatible with the database
 /// (the API response is a HashMap, and the database is a Vec)
@@ -8,6 +14,7 @@ use std::collections::HashMap;
 pub struct NearEarthObjectModel {
     pub links: ApiLinks,
     pub element_count: i32,
+    pub updated_date_time: String,
     pub near_earth_objects: Vec<NearEarthObject>,
 }
 

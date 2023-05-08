@@ -1,8 +1,9 @@
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
-use shared::apimodels::ApiResponse;
-use shared::persistencemodels::NearEarthObject;
+use shared::persistencemodels::{
+    NearEarthObject, NearEarthObjectApiResponse, NearEarthObjectModel,
+};
 
-async fn get_json_data_from_s3() -> Result<ApiResponse, Error> {
+async fn get_json_data_from_s3() -> Result<NearEarthObjectModel, Error> {
     let config = aws_config::load_from_env().await;
     let client = aws_sdk_s3::Client::new(&config);
     let data = client
@@ -14,16 +15,16 @@ async fn get_json_data_from_s3() -> Result<ApiResponse, Error> {
 
     let bytes = data.body.collect().await?.into_bytes();
     let response = std::str::from_utf8(&bytes)?;
-    let temp: ApiResponse = serde_json::from_str(response).unwrap();
+    let temp: NearEarthObjectModel = serde_json::from_str(response).unwrap();
 
     Ok(temp)
 }
 
-fn generate_response(data: ApiResponse) -> () {
-    // NearEarthObject {
-    //     updated_date_time: "COMING_SOON".to_string(),
-    //     data,
-    // }
+fn generate_response(data: NearEarthObjectModel) -> NearEarthObjectApiResponse {
+    NearEarthObjectApiResponse {
+        updated_date_time: data.updated_date_time.clone(),
+        data,
+    }
 }
 
 async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {

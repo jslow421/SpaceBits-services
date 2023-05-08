@@ -59,12 +59,13 @@ async fn convert_to_storage(response: ApiResponse) -> Result<NearEarthObjectMode
         },
         element_count: response.element_count,
         near_earth_objects: Vec::new(),
+        updated_date_time: Utc::now().to_string(),
     };
 
-    let first_item = response.near_earth_objects.values().next().unwrap();
+    let today_objects = response.near_earth_objects.values().next().unwrap();
 
     // TODO: Since we're going through this effort, maybe we can clean up the types so we're not cloning all these strings
-    for item in first_item {
+    for item in today_objects {
         let mut neo = NearEarthObject {
             id: item.id.clone(),
             neo_reference_id: item.neo_reference_id.clone(),

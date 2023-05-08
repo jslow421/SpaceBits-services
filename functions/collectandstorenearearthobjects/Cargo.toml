@@ -1,23 +1,12 @@
 [package]
 name = "readnearearthobjects"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-
-# Starting in Rust 1.62 you can use `cargo add` to add dependencies 
-# to your project.
-#
-# If you're using an older Rust version,
-# download cargo-edit(https://github.com/killercup/cargo-edit#installation) 
-# to install the `add` subcommand.
-#
-# Running `cargo add DEPENDENCY_NAME` will
-# add the latest version of a dependency to the list,
-# and it will keep the alphabetic ordering for you.
 
 [dependencies]
 reqwest = { version = "0.11", features = ["native-tls-vendored"] }
-lambda_http = "0.7"
-lambda_runtime = "0.7"
+lambda_http = "0.8"
+lambda_runtime = "0.8"
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = [
@@ -28,8 +17,8 @@ simple_logger = "4.0.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 aws-config = "0.55"
-aws-sdk-s3 = "0.25"
-aws-sdk-ssm = "0.25"
+aws-sdk-s3 = "0.27"
+aws-sdk-ssm = "0.27"
 aws-smithy-http = "0.55.0"
 bytes = "1.0"
 chrono = "0.4.24"
