@@ -77,3 +77,91 @@ pub struct MissDistance {
     pub kilometers: String,
     pub miles: String,
 }
+
+// Upcoming Launches
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunches {
+    pub valid_auth: bool,
+    pub count: u32,
+    pub limit: u32,
+    pub total: u64,
+    pub last_page: u64,
+    pub result: Vec<UpcomingLaunchesLaunch>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunchesLaunch {
+    pub id: u64,
+    pub cospar_id: Option<String>,
+    pub sort_date: String,
+    pub name: String,
+    pub provider: UpcomingLaunchProvider,
+    pub vehicle: UpcomingLaunchVehicle,
+    pub pad: UpcomingLaunchPad,
+    pub missions: Vec<UpcomingLaunchMission>,
+    pub mission_description: String,
+    pub launch_description: String,
+    pub win_open: Option<String>,
+    pub t0: Option<String>,
+    pub win_close: Option<String>,
+    pub date_str: String,
+    pub tags: Vec<UpcomingLaunchTag>,
+    pub slug: String,
+    pub weather_summary: Option<String>,
+    pub weather_temp: i32,
+    pub weather_condition: Option<String>,
+    pub weather_wind_mph: Option<i32>,
+    pub weather_icon: Option<String>,
+    pub weather_updated: Option<String>,
+    #[serde(alias = "quick_text")]
+    pub quick_text: Option<String>,
+    pub suborbital: bool,
+    pub modified: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunchProvider {
+    pub id: u64,
+    pub name: String,
+    pub slug: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunchVehicle {
+    pub id: u64,
+    pub name: String,
+    pub company_id: u64,
+    pub slug: String,
+    pub pad: UpcomingLaunchPad,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunchPad {
+    pub id: u64,
+    pub name: String,
+    pub location: UpcomingLaunchPadLocation,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunchPadLocation {
+    pub id: u64,
+    pub name: String,
+    pub state: String,
+    #[serde(alias = "statename")]
+    pub state_name: String,
+    pub country: String,
+    pub slug: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunchMission {
+    pub id: u64,
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpcomingLaunchTag {
+    pub id: u64,
+    pub text: String,
+}

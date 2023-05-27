@@ -34,7 +34,7 @@ export class SpaceRustStack extends cdk.Stack {
       }
     );
 
-    // Functions
+    //! Functions
     // Read function
     const readFunction = new cdk.aws_lambda.Function(
       this,
