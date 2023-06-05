@@ -23,6 +23,8 @@ enum Craft {
     ISS,
     #[serde(alias = "Shenzhou 15")]
     Shenzhou15,
+    #[serde(alias = "Tiangong")]
+    Tiangong,
 }
 
 async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
