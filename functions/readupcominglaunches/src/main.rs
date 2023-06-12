@@ -1,30 +1,49 @@
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
+use serde::{Deserialize, Serialize};
 use shared::persistencemodels::UpcomingLaunches;
+use std::env;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct UpcomingLaunchesResponse {
+    launches: UpcomingLaunches,
+    date: String,
+}
 
 async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
     // Extract some useful information from the request
     let launches = retrieve_json_data_from_s3().await?;
+    let result = generate_response(launches).await?;
 
-    // Return something that implements IntoResponse.
-    // It will be serialized to the right response event automatically by the runtime
     let resp = Response::builder()
         .status(200)
         .header("content-type", "application/json")
-        .body(serde_json::to_string(&launches).unwrap_or_default().into())
+        .body(serde_json::to_string(&result).unwrap_or_default().into())
         .map_err(Box::new)?;
+
     Ok(resp)
 }
 
-async fn generate
+async fn generate_response(launches: UpcomingLaunches) -> Result<UpcomingLaunchesResponse, Error> {
+    let launches = retrieve_json_data_from_s3().await?;
+    //let response = serde_json::to_string(&launches).unwrap();
+    let response = UpcomingLaunchesResponse {
+        launches,
+        date: "Coming soon".to_string(),
+    };
+
+    Ok(response)
+}
 
 async fn retrieve_json_data_from_s3() -> Result<UpcomingLaunches, Error> {
     let config = aws_config::load_from_env().await;
     let client = aws_sdk_s3::Client::new(&config);
+    let bucket_name = env::var("BUCKET_NAME").unwrap();
+    let file_name = env::var("FILE_NAME").unwrap();
 
     let data = client
         .get_object()
-        .bucket("my-bucket")
-        .key("my-key")
+        .bucket(bucket_name)
+        .key(file_name)
         .send()
         .await?;
 

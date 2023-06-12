@@ -97,7 +97,7 @@ pub struct UpcomingLaunchesLaunch {
     pub name: String,
     pub provider: UpcomingLaunchProvider,
     pub vehicle: UpcomingLaunchVehicle,
-    pub pad: UpcomingLaunchPad,
+    pub pad: Option<UpcomingLaunchPad>,
     pub missions: Vec<UpcomingLaunchMission>,
     pub mission_description: String,
     pub launch_description: String,
@@ -132,7 +132,7 @@ pub struct UpcomingLaunchVehicle {
     pub name: String,
     pub company_id: u64,
     pub slug: String,
-    pub pad: UpcomingLaunchPad,
+    pub pad: Option<UpcomingLaunchPad>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

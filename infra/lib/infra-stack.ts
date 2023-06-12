@@ -121,6 +121,29 @@ export class SpaceRustStack extends cdk.Stack {
       }
     );
 
+    // Get upcoming launch JSON for API
+    const getUpcomingLaunchJsonForApi = new cdk.aws_lambda.Function(
+      this,
+      "getUpcomingLaunchJsonForApi",
+      {
+        functionName: `${this.stackName}-get-upcoming-launch-json-for-api`,
+        runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2,
+        memorySize: 128,
+        timeout: cdk.Duration.seconds(30),
+        code: cdk.aws_lambda.Code.fromAsset(
+          "../functions/out/readupcominglaunches"
+        ),
+        handler: "nil",
+        architecture: cdk.aws_lambda.Architecture.ARM_64,
+        role: spaceBitsLambdaRole,
+        logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
+        environment: {
+          BUCKET_NAME: BUCKET_NAME,
+          FILE_NAME: "launches.json",
+        },
+      }
+    );
+
     // Get existing bucket
     const bucket = cdk.aws_s3.Bucket.fromBucketName(
       this,
@@ -138,6 +161,7 @@ export class SpaceRustStack extends cdk.Stack {
     // Grant permissions for bucket to functions
     bucket.grantRead(readFunction);
     bucket.grantRead(retrieveNearEarthObjectsFunction);
+    bucket.grantRead(getUpcomingLaunchJsonForApi);
     bucket.grantReadWrite(nearEarthObjectsRetrievalFunction);
 
     // Api Gateway
@@ -192,6 +216,17 @@ export class SpaceRustStack extends cdk.Stack {
       ),
       {
         apiKeyRequired: true,
+      }
+    );
+
+    // Get upcoming launches endpoint
+    const retrieveUpcomingLaunchesResource =
+      spaceBitsApi.root.addResource("upcomingLaunches");
+    retrieveUpcomingLaunchesResource.addMethod(
+      "GET",
+      new cdk.aws_apigateway.LambdaIntegration(getUpcomingLaunchJsonForApi),
+      {
+        apiKeyRequired: false,
       }
     );
 
