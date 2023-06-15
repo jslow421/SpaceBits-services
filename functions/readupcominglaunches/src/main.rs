@@ -17,6 +17,8 @@ async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
     let resp = Response::builder()
         .status(200)
         .header("content-type", "application/json")
+        .header("Access-Control-Allow-Origin", "*")
+        .header("Access-Control-Allow-Methods", "GET")
         .body(serde_json::to_string(&result).unwrap_or_default().into())
         .map_err(Box::new)?;
 
@@ -25,7 +27,6 @@ async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
 
 async fn generate_response(launches: UpcomingLaunches) -> Result<UpcomingLaunchesResponse, Error> {
     let launches = retrieve_json_data_from_s3().await?;
-    //let response = serde_json::to_string(&launches).unwrap();
     let response = UpcomingLaunchesResponse {
         launches,
         date: "Coming soon".to_string(),
