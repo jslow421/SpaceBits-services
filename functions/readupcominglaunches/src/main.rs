@@ -26,7 +26,6 @@ async fn function_handler(_event: Request) -> Result<Response<Body>, Error> {
 }
 
 async fn generate_response(launches: UpcomingLaunches) -> Result<UpcomingLaunchesResponse, Error> {
-    let launches = retrieve_json_data_from_s3().await?;
     let response = UpcomingLaunchesResponse {
         launches,
         date: "Coming soon".to_string(),
