@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-aws-config = "0.55.3"
-aws-sdk-s3 = "0.28.0"
-aws-sdk-s3control = "0.28.0"
+aws-config = "0.56.1"
+aws-sdk-s3 = "0.30.0"
+aws-sdk-s3control = "0.30.0"
 lambda_http = "0.8"
 lambda_runtime = "0.8"
 log = "0.4.17"
@@ -16,5 +16,7 @@ serde_json = "1.0.96"
 simple_logger = "4.1.0"
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }
-tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "fmt",
+] }
 shared = { path = "../../shared" }

@@ -70,7 +70,7 @@ async fn convert_to_storage(response: ApiResponse) -> Result<NearEarthObjectMode
             id: item.id.clone(),
             neo_reference_id: item.neo_reference_id.clone(),
             name: item.name.clone(),
-            nasa_jpl_url: item.nasa_jpl_url.clone(),
+            nasa_jpl_url: item.nasa_jpl_url.clone().replace("http", "https"),
             absolute_magnitude_h: item.absolute_magnitude_h,
             estimated_diameter: EstimatedDiameter {
                 kilometers: EstimatedDiameterValues {
